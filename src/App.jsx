@@ -1,4 +1,4 @@
-import Home from "./components/home"
+import Home from "./components/home2"
 import NewDesign from "./components/newDesign"
 
 function App() {
