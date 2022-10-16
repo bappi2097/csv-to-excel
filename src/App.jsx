@@ -1,9 +1,7 @@
-import Home from "./components/home2"
-import NewDesign from "./components/newDesign"
+import Home from "./components/Home"
 
 function App() {
-  // return <Home />
-  return <NewDesign />
+  return <Home />
 }
 
 export default App
