@@ -1,26 +1,37 @@
 import React from "react"
 import { DownloadOutlined } from "@ant-design/icons"
 import { Button, Typography, Card, Checkbox } from "antd"
+import { tableHeaderStyle } from "../../../styles/style"
 const { Text } = Typography
 
-const TableHeader = () => {
+const TableHeader = ({
+  checkedLength,
+  onDownload,
+  dataLength,
+  onAllSelect,
+}) => {
   return (
     <Card
-      bodyStyle={{
-        display: "grid",
-        gridTemplateColumns: "0px 1fr 150px 0px",
-        justifyContent: "space-between",
-        alignItems: "center",
-      }}
-      style={{
-        margin: "20px 20px -10px",
-      }}
+      bodyStyle={tableHeaderStyle.containerBody}
+      style={tableHeaderStyle.container}
+      hoverable
     >
       <Text>
-        <Checkbox checked={false} style={{ marginRight: 10 }} />
-        10 Rows selected
+        <Checkbox
+          checked={checkedLength > 0 && checkedLength === dataLength}
+          style={tableHeaderStyle.checkbox}
+          onClick={onAllSelect}
+        />
+        {checkedLength > 0
+          ? `${checkedLength} Rows selected`
+          : "No row selected"}
       </Text>
-      <Button type='primary' icon={<DownloadOutlined />}>
+      <Button
+        type='primary'
+        icon={<DownloadOutlined />}
+        disabled={checkedLength === 0}
+        onClick={onDownload}
+      >
         Download
       </Button>
     </Card>

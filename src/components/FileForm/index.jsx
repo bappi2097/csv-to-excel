@@ -1,86 +1,111 @@
-import React from "react"
-import { abbreviateNumber } from "js-abbreviation-number"
-import { DownloadOutlined, EditFilled, InboxOutlined } from "@ant-design/icons"
-import {
-  Form,
-  Button,
-  InputNumber,
-  Typography,
-  List,
-  Card,
-  Checkbox,
-  Input,
-  Tooltip,
-} from "antd"
+import React, { useState } from "react"
+import { InboxOutlined } from "@ant-design/icons"
+import { Form, Button, InputNumber, Typography, Card, Input } from "antd"
 import Dragger from "antd/lib/upload/Dragger"
+import { formStyle } from "../../styles/style"
+import * as Papa from "papaparse"
+import { abbreviateNumber } from "js-abbreviation-number"
 const { Text } = Typography
 
-const props = {
-  name: "file",
-  onChange(info) {},
-  onDrop(e) {},
-}
+const FileForm = ({ onParseCsv, setLoader, onGenerate }) => {
+  const [formData, setFormData] = useState({ rowsLimit: 320000, prefix: "" })
+  const [rowsLength, setRowsLength] = useState(0)
 
-const data = [
-  {
-    name: "a",
-    rows: 10000,
-  },
-  {
-    name: "a",
-    rows: 10000,
-  },
-  {
-    name: "a",
-    rows: 10000,
-  },
-]
-export default function File() {
+  const draggerProps = {
+    name: "file",
+    accept: ".csv",
+    customRequest: ({ onSuccess, file, onError }) => {
+      try {
+        setLoader(true)
+        const worker = new Worker("worker.js", { type: "module" })
+        worker.onmessage = (ev) => {
+          console.time("Parse")
+          Papa.parse(ev.data, {
+            header: true,
+            dynamicTyping: true,
+            complete: (results) => {
+              onParseCsv(results.data)
+              setRowsLength(results.data.length)
+            },
+          })
+          worker.terminate()
+          console.timeEnd("Parse")
+          onSuccess("Ok")
+          setLoader(false)
+        }
+        worker.postMessage({ file })
+      } catch (error) {
+        onError({ error })
+      }
+    },
+  }
+
+  const handleChange = ({ name, value }) => {
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }))
+  }
+
   return (
-    <Card
-      style={{
-        width: "fit-content",
-        margin: "auto",
-        background: "white",
-        padding: 20,
-        borderRadius: 8,
-      }}
-    >
+    <Card style={formStyle.container} hoverable>
       <Form
         labelCol={{ span: 4 }}
         wrapperCol={{ span: 14 }}
         layout='horizontal'
-        style={{
-          display: "grid",
-          gridTemplateColumns: "200px 300px",
-          gap: 10,
-        }}
+        style={formStyle.form}
       >
-        <Dragger {...props}>
+        <Dragger {...draggerProps}>
           <p className='ant-upload-drag-icon'>
             <InboxOutlined />
           </p>
           <p className='ant-upload-text'>Click or drag to upload</p>
           <p className='ant-upload-hint'>Only .csv file</p>
         </Dragger>
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "space-between",
-            alignItems: "stretch",
-          }}
-        >
-          <InputNumber placeholder='No of Rows' style={{ width: "100%" }} />
-          <Input placeholder='Prefix' style={{ width: "100%" }} />
-          <Button type='primary'>Generate</Button>
+
+        <div style={formStyle.formInputs}>
+          <div>
+            <span>No of Rows</span>
+            <InputNumber
+              name='rowsLimit'
+              placeholder='100000'
+              onChange={(value) => {
+                handleChange({ name: "rowsLimit", value })
+              }}
+              style={{ width: "100%" }}
+              value={formData.rowsLimit}
+            />
+          </div>
+          <div>
+            <span>Prefix</span>
+            <Input
+              name='prefix'
+              placeholder='output_'
+              onChange={(event) => {
+                const { name, value } = event.target
+                handleChange({ name, value })
+              }}
+              value={formData.prefix}
+              style={{ width: "100%" }}
+            />
+          </div>
+          <Button
+            type='primary'
+            disabled={formData.rowsLimit <= 0 || rowsLength === 0}
+            onClick={() => {
+              onGenerate(formData)
+            }}
+          >
+            Generate
+          </Button>
         </div>
-        <Text
-          style={{ textAlign: "center", gridColumn: "1/-1", marginTop: 20 }}
-        >
-          {(100000).toLocaleString()} Rows in this file
+        <Text style={formStyle.text}>
+          {rowsLength > 0 &&
+            `${abbreviateNumber(rowsLength, 2)} Rows in this file`}
         </Text>
       </Form>
     </Card>
   )
 }
+
+export default FileForm
