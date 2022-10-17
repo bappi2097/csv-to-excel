@@ -3,7 +3,6 @@ import { InboxOutlined } from "@ant-design/icons"
 import { Form, Button, InputNumber, Typography, Card, Input } from "antd"
 import Dragger from "antd/lib/upload/Dragger"
 import { formStyle } from "../../styles/style"
-import * as Papa from "papaparse"
 import { abbreviateNumber } from "js-abbreviation-number"
 const { Text } = Typography
 
@@ -19,24 +18,24 @@ const FileForm = ({ onParseCsv, setLoader, onGenerate }) => {
         setLoader(true)
         const worker = new Worker(
           new URL("../../../worker.js", import.meta.url),
-          {
-            type: "module",
-          }
+          { type: "module" }
         )
         worker.onmessage = (ev) => {
           console.time("Parse")
-          Papa.parse(ev.data, {
-            header: true,
-            dynamicTyping: true,
-            complete: (results) => {
-              onParseCsv(results.data)
-              setRowsLength(results.data.length)
-            },
-          })
+          const parseWorker = new Worker(
+            new URL("../../../parseWorker.js", import.meta.url),
+            { type: "module" }
+          )
+          parseWorker.onmessage = (results) => {
+            onParseCsv(results.data)
+            setRowsLength(results.data.length)
+            parseWorker.terminate()
+            setLoader(false)
+            console.timeEnd("Parse")
+          }
+          parseWorker.postMessage({ data: ev.data })
           worker.terminate()
-          console.timeEnd("Parse")
           onSuccess("Ok")
-          setLoader(false)
         }
         worker.postMessage({ file })
       } catch (error) {
