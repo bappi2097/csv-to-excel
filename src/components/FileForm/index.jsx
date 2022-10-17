@@ -17,7 +17,12 @@ const FileForm = ({ onParseCsv, setLoader, onGenerate }) => {
     customRequest: ({ onSuccess, file, onError }) => {
       try {
         setLoader(true)
-        const worker = new Worker("worker.js", { type: "module" })
+        const worker = new Worker(
+          new URL("../../../worker.js", import.meta.url),
+          {
+            type: "module",
+          }
+        )
         worker.onmessage = (ev) => {
           console.time("Parse")
           Papa.parse(ev.data, {
@@ -35,6 +40,7 @@ const FileForm = ({ onParseCsv, setLoader, onGenerate }) => {
         }
         worker.postMessage({ file })
       } catch (error) {
+        console.log(error)
         onError({ error })
       }
     },
