@@ -44,7 +44,7 @@ const Home = () => {
         setLoader={setLoader}
         onGenerate={handleGenerate}
       />
-      <Table data={generatedData()} />
+      <Table data={generatedData()} setLoader={setLoader} />
       {loader && <Backdrop />}
     </>
   )

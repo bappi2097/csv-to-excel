@@ -5,7 +5,7 @@ import TableRow from "./TableRow"
 import { tableStyle } from "../../styles/style"
 import * as xlsx from "xlsx"
 
-const Table = ({ data }) => {
+const Table = ({ data, setLoader }) => {
   const [list, setList] = useState([])
 
   const handleDownload = () => {
@@ -55,6 +55,7 @@ const Table = ({ data }) => {
             data={list?.[index] ?? { name: "", isChecked: false }}
             setList={setList}
             index={index}
+            setLoader={setLoader}
           />
         )}
       />
